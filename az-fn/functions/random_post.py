@@ -22,7 +22,7 @@ def upload_model_data(s3, bucket: str, key: str, data: str) -> None:
 
 bp = func.Blueprint()
 
-@bp.schedule(schedule="0 0 */4 * * *", arg_name = "randomPostFunc", run_on_startup = True, use_monitor = False)
+@bp.schedule(schedule="0 0 */4 * * *", arg_name = "randomPostFunc", run_on_startup = False, use_monitor = False)
 def random_post(randomPostFunc: func.TimerRequest):
     print("random_post start")
     s3 = boto3.client(service_name ="s3")

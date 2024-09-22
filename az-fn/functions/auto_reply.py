@@ -37,7 +37,7 @@ def auto_reply(autoReplyFunc: func.TimerRequest):
         if notification.record.reply is not None:
             root = models.create_strong_ref(notification.record.reply.root)
 
-        #bsky_client.app.bsky.notification.update_seen({'seen_at': bsky_client.get_current_time_iso()})
+        bsky_client.app.bsky.notification.update_seen({'seen_at': bsky_client.get_current_time_iso()})
         need_to_reply.append((parent, root))
 
     s3 = boto3.client(service_name ="s3")
