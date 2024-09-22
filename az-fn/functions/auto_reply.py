@@ -11,6 +11,7 @@ CHAIN_FILE_KEY = os.getenv('CHAIN_FILE_KEY')
 
 BLUESKY_HANDLE = os.getenv('BLUESKY_HANDLE')
 BLUESKY_APP_PASS = os.getenv('BLUESKY_APP_PASS')
+BLUESKY_SESSION = os.getenv('BLUESKY_SESSION')
 
 def load_model_data(s3, bucket: str, key: str) -> str:
     data = s3.get_object(Bucket = bucket, Key = key)['Body'].read().decode('utf-8')
@@ -18,11 +19,11 @@ def load_model_data(s3, bucket: str, key: str) -> str:
 
 bp = func.Blueprint()
 
-@bp.schedule(schedule="0 * * * * *", arg_name = "autoReplyFunc", run_on_startup = True, use_monitor = False)
+@bp.schedule(schedule="0 * * * * *", arg_name = "autoReplyFunc", run_on_startup = False, use_monitor = False)
 def auto_reply(autoReplyFunc: func.TimerRequest):
     print("auto_reply start")
     bsky_client = Client()
-    bsky_client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
+    bsky_client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS, session_string = BLUESKY_SESSION)
 
     res = bsky_client.app.bsky.notification.list_notifications()
     need_to_reply = []
@@ -37,14 +38,16 @@ def auto_reply(autoReplyFunc: func.TimerRequest):
         if notification.record.reply is not None:
             root = models.create_strong_ref(notification.record.reply.root)
 
-        bsky_client.app.bsky.notification.update_seen({'seen_at': bsky_client.get_current_time_iso()})
         need_to_reply.append((parent, root))
 
-    s3 = boto3.client(service_name ="s3")
-    bsky_client = Client()
-    bsky_client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
+    if len(need_to_reply) == 0:
+        print("auto_reply end")
+        return
 
+    s3 = boto3.client(service_name ="s3")
     model_json = load_model_data(s3, S3_BUCKET, CHAIN_FILE_KEY)
+
+    bsky_client.app.bsky.notification.update_seen({'seen_at': bsky_client.get_current_time_iso()})
 
     model = markovify.Text.from_json(model_json)
     for parent, root in need_to_reply:
