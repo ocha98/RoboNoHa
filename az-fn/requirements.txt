@@ -4,6 +4,5 @@
 
 azure-functions
 boto3
-dotenv
 markovify
 atproto

@@ -1,12 +1,10 @@
 import os
 import boto3
 from atproto import Client, models
-from dotenv import load_dotenv
 import markovify
 
 import azure.functions as func
 
-load_dotenv()
 
 S3_BUCKET = os.getenv('S3_BUCKET')
 CHAIN_FILE_KEY = os.getenv('CHAIN_FILE_KEY')
