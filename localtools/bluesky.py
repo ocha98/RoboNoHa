@@ -6,14 +6,16 @@ from lib import cleaing_txt
 
 load_dotenv()
 
-BLUESKY_HANDLE = os.getenv('BLUESKY_HANDLE')
-BLUESKY_APP_PASS = os.getenv('BLUESKY_APP_PASS')
 BLUESKY_SESSION = os.getenv('BLUESKY_SESSION')
 
 bsky_client = Client()
 bsky_client.login(session_string = BLUESKY_SESSION)
 
 def get_bluesky_session():
+    BLUESKY_HANDLE = os.getenv('BLUESKY_HANDLE')
+    BLUESKY_APP_PASS = os.getenv('BLUESKY_APP_PASS')
+    bsky_client = Client()
+    bsky_client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
     return bsky_client.export_session_string()
 
 def get_all_posts():
