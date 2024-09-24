@@ -70,7 +70,12 @@ def auto_reply(autoReplyFunc: func.TimerRequest):
         logging.info(f'replying to {reply_to}')
         bsky_client.send_post(text = random_post, reply_to = reply_to, langs = ['ja'])
 
-    logging.info('update bluesky session of keyvault')
-    client.set_secret(BLUESKY_SESSION_KEYVAULT_NAME, bsky_client.export_session_string())
-
+    logging.info('check session is updated')
+    new_session = bsky_client.export_session_string()
+    if new_session != bluesky_session:
+        logging.info('session is updated')
+        logging.info('update bluesky session of keyvault')
+        client.set_secret(BLUESKY_SESSION_KEYVAULT_NAME, bsky_client.export_session_string())
+    else:
+        logging.info('session is not updated')
     logging.info('auto_reply end')
