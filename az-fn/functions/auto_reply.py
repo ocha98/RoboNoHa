@@ -50,6 +50,8 @@ def auto_reply(autoReplyFunc: func.TimerRequest):
 
     if len(need_to_reply) == 0:
         logging.info('no need to reply')
+        logging.info('update bluesky session of keyvault')
+        client.set_secret(BLUESKY_SESSION_KEYVAULT_NAME, bsky_client.export_session_string())
         return
 
     logging.info(f'need to reply len: {len(need_to_reply)}')
