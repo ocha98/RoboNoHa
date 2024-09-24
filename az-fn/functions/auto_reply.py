@@ -5,10 +5,13 @@ import markovify
 import logging
 
 import azure.functions as func
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 S3_BUCKET = os.getenv('S3_BUCKET')
 CHAIN_FILE_KEY = os.getenv('CHAIN_FILE_KEY')
-BLUESKY_SESSION = os.getenv('BLUESKY_SESSION')
+KEY_VAULT_URL = os.getenv('KEY_VAULT_URL')
+BLUESKY_SESSION_KEYVAULT_NAME = os.getenv('BLUESKY_SESSION_KEYVAULT_NAME')
 
 def load_model_data(s3, bucket: str, key: str) -> str:
     data = s3.get_object(Bucket = bucket, Key = key)['Body'].read().decode('utf-8')
@@ -20,9 +23,14 @@ bp = func.Blueprint()
 def auto_reply(autoReplyFunc: func.TimerRequest):
     logging.info('auto_reply start')
 
+    logging.info('getting bluesky session from keyvalut')
+    credential = DefaultAzureCredential()
+    client = SecretClient(vault_url = KEY_VAULT_URL, credential = credential)
+    bluesky_session = client.get_secret(BLUESKY_SESSION_KEYVAULT_NAME).value
+
     logging.info('login to bluesky')
     bsky_client = Client()
-    bsky_client.login(session_string = BLUESKY_SESSION)
+    bsky_client.login(session_string = bluesky_session)
 
     logging.info('getting notifications')
     res = bsky_client.app.bsky.notification.list_notifications()
@@ -59,5 +67,8 @@ def auto_reply(autoReplyFunc: func.TimerRequest):
         reply_to = models.AppBskyFeedPost.ReplyRef(parent = parent, root = root)
         logging.info(f'replying to {reply_to}')
         bsky_client.send_post(text = random_post, reply_to = reply_to, langs = ['ja'])
+
+    logging.info('update bluesky session of keyvault')
+    client.set_secret(BLUESKY_SESSION_KEYVAULT_NAME, bsky_client.export_session_string())
 
     logging.info('auto_reply end')
