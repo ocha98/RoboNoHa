@@ -41,6 +41,9 @@ def auto_reply_impl(bsky_client: atproto.Client) -> None:
 
         random_post = model.make_short_sentence(60).replace(' ', '')
 
+        logging.info(f'{i+1}/{num_need_to_reply}: liking {parent}')
+        bsky_client.like(uri = parent.uri, cid = parent.cid)
+
         reply_to = models.AppBskyFeedPost.ReplyRef(parent = parent, root = root)
         logging.info(f'{i+1}/{num_need_to_reply}: replying to {reply_to}')
         bsky_client.send_post(text = random_post, reply_to = reply_to, langs = ['ja'])
