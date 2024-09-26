@@ -4,7 +4,7 @@ from .lib import BlueSkySession, load_markovify_model
 
 bp = func.Blueprint()
 
-@bp.schedule(schedule='0 0 */4 * * *', arg_name = 'randomPostFunc', run_on_startup = False, use_monitor = False)
+@bp.schedule(schedule = '0 0 */5 * * *', arg_name = 'randomPostFunc', run_on_startup = False, use_monitor = False)
 def random_post(randomPostFunc: func.TimerRequest):
     logging.info('random_post start')
 
