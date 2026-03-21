@@ -7,6 +7,18 @@ from .lib import BlueSkySession, load_markovify_model
 
 bp = func.Blueprint()
 
+# リプライの必要性を判断するための条件
+def should_reply(post) -> bool:
+    if 'ロボの葉' not in post.record.text: # 言及がない場合は返信しない
+        return False
+    if post.record.reply is not None: # replyには返信しない
+        return False
+    if post.viewer.like is not None: # 既にいいねで返信済み
+        return False
+    if post.author.handle == 'robo.ochappa.net': # 自分の投稿には返信しない
+        return False
+    return True
+
 def ego_search_impl(bsky_client: atproto.Client) -> None:
     logging.info('searching post...')
     now = bsky_client.get_current_time()
@@ -18,18 +30,23 @@ def ego_search_impl(bsky_client: atproto.Client) -> None:
 
     posts = res.posts
 
-    need_to_reply_refs = []
+    need_to_reply_refs = set()
     for post in posts:
-        if 'ロボの葉' not in post.record.text:
-            continue
-        if post.record.reply is not None: # replyには返信しない
-            continue
-        if post.viewer.like is not None: # 既にいいねで返信済み
-            continue
-        if post.author.handle == 'robo.ochappa.net': # 自分の投稿には返信しない
+        if not should_reply(post):
             continue
         ref = models.create_strong_ref(post)
-        need_to_reply_refs.append(ref)
+        need_to_reply_refs.add(ref)
+
+    # タイムラインを監視
+    timeline = bsky_client.app.bsky.feed.get_timeline()
+    for post in timeline.posts:
+        if not should_reply(post):
+            continue
+        ref = models.create_strong_ref(post)
+        
+        need_to_reply_refs.add(ref)
+
+    need_to_reply_refs = list(need_to_reply_refs)
 
     if len(need_to_reply_refs) == 0:
         logging.info('no need to reply')
