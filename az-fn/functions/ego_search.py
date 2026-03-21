@@ -30,21 +30,25 @@ def ego_search_impl(bsky_client: atproto.Client) -> None:
 
     posts = res.posts
 
-    need_to_reply_refs = set()
+    need_to_reply_refs = []
     for post in posts:
         if not should_reply(post):
             continue
         ref = models.create_strong_ref(post)
-        need_to_reply_refs.add(ref)
+        need_to_reply_refs.append(ref)
 
+    logging.info('searching timeline...')
     # タイムラインを監視
-    timeline = bsky_client.app.bsky.feed.get_timeline()
-    for post in timeline.posts:
+    timeline = bsky_client.app.bsky.feed.get_timeline().feed
+    for post in timeline:
+        post = post.post
         if not should_reply(post):
             continue
         ref = models.create_strong_ref(post)
         
-        need_to_reply_refs.add(ref)
+        if ref in need_to_reply_refs:
+            continue
+        need_to_reply_refs.append(ref)
 
     need_to_reply_refs = list(need_to_reply_refs)
 
