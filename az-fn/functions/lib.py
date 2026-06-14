@@ -89,11 +89,14 @@ def init_bluesky_client() -> Client:
             "BLUESKY_SESSION が無効、かつ BLUESKY_HANDLE / BLUESKY_APP_PASS が設定されていません。"
         )
 
-    logging.info("Bluesky に app password でログインします")
-    client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
+    try:
+        logging.info("Bluesky に app password でログインします")
+        client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
 
-    # ログイン確認
-    verify_bluesky_login(client, login_method="app pass")
+        # ログイン確認
+        verify_bluesky_login(client, login_method="app pass")
+    except Exception as e:
+            logging.warning(f"App passでのログインに失敗しました。:  {e}")
 
     save_bluesky_session(client.export_session_string())
 
