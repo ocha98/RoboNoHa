@@ -3,7 +3,7 @@ import atproto
 from atproto import models
 import azure.functions as func
 import datetime
-from .lib import BlueSkySession, load_markovify_model
+from .lib import init_bluesky_client, load_markovify_model
 
 bp = func.Blueprint()
 
@@ -75,7 +75,7 @@ def ego_search_impl(bsky_client: atproto.Client) -> None:
 def ego_search(egoSearchFunc: func.TimerRequest):
     logging.info('ego_search start')
 
-    with BlueSkySession() as bsky_client:
-        ego_search_impl(bsky_client)
+    bsky_client = init_bluesky_client()
+    ego_search_impl(bsky_client)
 
     logging.info('ego_search end')

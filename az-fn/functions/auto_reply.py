@@ -2,7 +2,7 @@ import logging
 import atproto
 from atproto import models
 import azure.functions as func
-from .lib import BlueSkySession, load_markovify_model
+from .lib import init_bluesky_client, load_markovify_model
 
 bp = func.Blueprint()
 
@@ -52,7 +52,7 @@ def auto_reply_impl(bsky_client: atproto.Client) -> None:
 def auto_reply(autoReplyFunc: func.TimerRequest):
     logging.info('auto_reply start')
 
-    with BlueSkySession() as bsky_client:
-        auto_reply_impl(bsky_client)
+    bsky_client = init_bluesky_client()
+    auto_reply_impl(bsky_client)
 
     logging.info('auto_reply end')

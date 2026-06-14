@@ -34,4 +34,6 @@ def cleaning_tweet(tweets_js_path: str = 'tweets.js', save_path: str = 'cleaned_
     with open(save_path, 'w') as f:
         f.write('\n'.join(tweets))
 
-cleaning_tweet()
+
+if __name__ == '__main__':
+    cleaning_tweet()
