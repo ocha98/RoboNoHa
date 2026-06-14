@@ -33,13 +33,41 @@ def save_bluesky_session(session: str):
     secret_client.set_secret(BLUESKY_SESSION_KEYVAULT_NAME, session)
 
 
+def verify_bluesky_login(client: Client, login_method: str) -> None:
+    logging.info("Bluesky ログイン確認を開始します: method=%s", login_method)
+
+    try:
+        me = client.me
+
+        logging.info(
+            "Bluesky ログイン確認に成功しました: method=%s handle=%s did=%s",
+            login_method,
+            getattr(me, "handle", None),
+            getattr(me, "did", None),
+        )
+
+    except Exception:
+        logging.exception(
+            "Bluesky ログイン確認に失敗しました: method=%s",
+            login_method,
+        )
+        raise
+
 def init_bluesky_client() -> Client:
+    logging.info('bluesky clientの初期化を開始します')
     client = Client()
 
     @client.on_session_change
     def on_session_change(event: SessionEvent, session) -> None:
+        logging.info('bluesky session change eventを受信')
         if event in (SessionEvent.CREATE, SessionEvent.REFRESH):
-            save_bluesky_session(session.export())
+            try:
+                logging.info('Bluesky sessionを保存します。 event=%s', event)
+                save_bluesky_session(session.export())
+                logging.info('Bluesky sessionの保存に成功しました: event=%s', event)
+            except Exception as e:
+                logging.exception("Bluesky sessionの保存に失敗しました event = %s", event)
+                raise
 
     bluesky_session = load_bluesky_session()
 
@@ -49,7 +77,7 @@ def init_bluesky_client() -> Client:
             client.login(session_string=bluesky_session)
 
             # セッション確認
-            _ = client.me
+            verify_bluesky_login(client, login_method="session")
 
             return client
 
@@ -65,7 +93,7 @@ def init_bluesky_client() -> Client:
     client.login(BLUESKY_HANDLE, BLUESKY_APP_PASS)
 
     # ログイン確認
-    _ = client.me
+    verify_bluesky_login(client, login_method="app pass")
 
     save_bluesky_session(client.export_session_string())
 
